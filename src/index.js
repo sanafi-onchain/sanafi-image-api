@@ -10,7 +10,7 @@ const app = new Hono();
 app.use('*', cors(getCorsConfig()));
 
 // Handle preflight OPTIONS requests
-app.options('*', (c) => {
+app.options('*', () => {
   return new Response(null, { status: 204 });
 });
 
@@ -18,7 +18,7 @@ app.options('*', (c) => {
 app.post('/upload', async (c) => {
   try {
     const env = c.env;
-    
+
     // Validate environment variables
     if (!env.CF_IMAGES_ACCOUNT_ID || !env.CF_IMAGES_API_TOKEN) {
       console.error('Missing required environment variables');
@@ -66,9 +66,9 @@ app.post('/upload', async (c) => {
     // Validate MIME type
     const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
     if (!allowedMimeTypes.includes(file.type)) {
-      return c.json({ 
-        success: false, 
-        error: `Unsupported file type. Allowed: ${allowedMimeTypes.join(', ')}` 
+      return c.json({
+        success: false,
+        error: `Unsupported file type. Allowed: ${allowedMimeTypes.join(', ')}`
       }, 415);
     }
 
@@ -77,7 +77,7 @@ app.post('/upload', async (c) => {
     if (isOnlyPresign) {
       // Generate presigned URL
       const result = await cfImages.createDirectUpload();
-      
+
       return c.json({
         success: true,
         presignURL: result.uploadURL,
@@ -87,22 +87,21 @@ app.post('/upload', async (c) => {
       // Direct upload
       const fileName = newFileName || generateUUID();
       const result = await cfImages.uploadImage(file, fileName);
-      
+
       // Build permanent URL
       const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_ID}/${result.id}/public`;
-      
+
       return c.json({
         success: true,
-        publicURL: publicURL,
+        publicURL,
         id: result.id
       });
     }
-
   } catch (error) {
     console.error('Upload error:', error);
-    return c.json({ 
-      success: false, 
-      error: error.message || 'Internal server error' 
+    return c.json({
+      success: false,
+      error: error.message || 'Internal server error'
     }, 500);
   }
 });
@@ -117,18 +116,6 @@ app.all('/upload', (c) => {
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-// Default route
-app.get('/', (c) => {
-  return c.json({ 
-    message: 'Sanafi Image API', 
-    version: '1.0.0',
-    endpoints: {
-      upload: 'POST /upload',
-      health: 'GET /health'
-    }
-  });
 });
 
 // 404 handler
