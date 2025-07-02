@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { getCorsConfig } from './utils/cors.js';
-import { generateUUID } from './utils/uuid.js';
+// import { generateUUID } from './utils/uuid.js';
 import { CloudflareImages } from './lib/cf-images.js';
 
 const app = new Hono();
@@ -70,7 +70,7 @@ app.post('/upload', async (c) => {
       }, 415);
     }
 
-    const fileName = newFileName || generateUUID();
+    const fileName = newFileName || Date.now();
     console.info(`${fileName} - Uploading file:`, {
       fileName,
       name: file.name,
@@ -89,8 +89,7 @@ app.post('/upload', async (c) => {
     return c.json({
       success: true,
       url: publicURL,
-      id: result.id,
-      filename: fileName
+      id: result.id
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -108,16 +107,13 @@ app.all('/upload', (c) => {
   }
 });
 
-// Health check endpoint
-app.get('/health', (c) => {
-  return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
 // Default route
 app.get('/', (c) => {
   return c.json({
     message: 'Sanafi Image API',
-    version: '1.0.0'
+    version: '1.0.0',
+    status: 'healthy',
+    timestamp: new Date().toISOString()
   });
 });
 
