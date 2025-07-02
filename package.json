@@ -1,0 +1,28 @@
+{
+  "name": "sanafi-image-api",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker API for image uploading with presigned URL support",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --env production",
+    "deploy:dev": "wrangler deploy --env development",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "format": "prettier --write src/**/*.js",
+    "format:check": "prettier --check src/**/*.js"
+  },
+  "packageManager": "yarn@1.22.19",
+  "keywords": ["cloudflare", "worker", "image", "upload", "api"],
+  "author": "Sanafi",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.1.1",
+    "wrangler": "^3.84.1"
+  },
+  "dependencies": {
+    "hono": "^4.6.12"
+  }
+}

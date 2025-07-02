@@ -1,0 +1,22 @@
+name = "sanafi-image-api"
+main = "src/index.js"
+compatibility_date = "2024-12-19"
+
+# Public variables (safe to commit)
+[vars]
+ALLOWED_ORIGINS = "https://sanafi.xyz,https://localhost:6666"
+
+# Sensitive variables are set via:
+# 1. wrangler secret put CF_IMAGES_API_TOKEN
+# 2. wrangler secret put CF_IMAGES_ACCOUNT_ID
+# 3. Or through Cloudflare Dashboard → Workers → Your Worker → Settings → Variables
+
+[env.development]
+name = "sanafi-image-api-dev"
+[env.development.vars]
+ALLOWED_ORIGINS = "https://sanafi.xyz,https://localhost:6666"
+
+[env.production]
+name = "sanafi-image-api-prod"
+[env.production.vars]
+ALLOWED_ORIGINS = "https://sanafi.xyz"
