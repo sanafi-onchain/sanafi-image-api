@@ -72,6 +72,13 @@ app.post('/upload', async (c) => {
       }, 415);
     }
 
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      isOnlyPresign
+    });
+
     const cfImages = new CloudflareImages(env.CF_IMAGES_ACCOUNT_ID, env.CF_IMAGES_API_TOKEN);
 
     if (isOnlyPresign) {

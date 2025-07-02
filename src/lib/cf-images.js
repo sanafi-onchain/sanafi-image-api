@@ -54,14 +54,15 @@ export class CloudflareImages {
    */
   async uploadImage(file, filename) {
     const formData = new FormData();
-    formData.append('file', file, filename);
+    formData.append('file', file);
     formData.append('requireSignedURLs', 'false');
     formData.append(
       'metadata',
       JSON.stringify({
         source: 'sanafi-image-api',
         originalName: file.name,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
+        customFilename: filename
       })
     );
 
