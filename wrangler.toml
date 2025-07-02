@@ -17,6 +17,6 @@ name = "sanafi-image-api-dev"
 ALLOWED_ORIGINS = "https://sanafi.xyz,https://localhost:6666"
 
 [env.production]
-name = "sanafi-image-api-prod"
+name = "sanafi-image-api"
 [env.production.vars]
 ALLOWED_ORIGINS = "https://sanafi.xyz"
