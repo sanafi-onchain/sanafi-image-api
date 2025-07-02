@@ -167,7 +167,7 @@ const response = await fetch('https://your-worker.your-subdomain.workers.dev/upl
 
 const result = await response.json();
 if (result.success) {
-  console.log('Image URL:', result.publicURL);
+  console.info('Image URL:', result.publicURL);
 }
 ```
 

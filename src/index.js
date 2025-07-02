@@ -22,8 +22,12 @@ app.post('/upload', async (c) => {
     // Validate environment variables
     if (!env.CF_IMAGES_ACCOUNT_ID || !env.CF_IMAGES_API_TOKEN) {
       console.error('Missing required environment variables');
+      console.error('CF_IMAGES_ACCOUNT_ID:', env.CF_IMAGES_ACCOUNT_ID ? 'SET' : 'MISSING');
+      console.error('CF_IMAGES_API_TOKEN:', env.CF_IMAGES_API_TOKEN ? 'SET' : 'MISSING');
       return c.json({ success: false, error: 'Server configuration error' }, 500);
     }
+
+    console.info('Environment check passed - both variables are set');
 
     // Check Content-Type
     const contentType = c.req.header('content-type');
@@ -72,17 +76,19 @@ app.post('/upload', async (c) => {
       }, 415);
     }
 
-    console.log('File details:', {
+    console.info('File details:', {
       name: file.name,
       type: file.type,
       size: file.size,
-      isOnlyPresign
+      isOnlyPresign,
+      isOnlyPresignStr
     });
 
     const cfImages = new CloudflareImages(env.CF_IMAGES_ACCOUNT_ID, env.CF_IMAGES_API_TOKEN);
 
     if (isOnlyPresign) {
-      // Generate presigned URL
+      // Generate presigned URL - no file data needed for this step
+      console.info('Creating presigned URL...');
       const result = await cfImages.createDirectUpload();
 
       return c.json({
@@ -92,6 +98,7 @@ app.post('/upload', async (c) => {
       });
     } else {
       // Direct upload
+      console.info('Performing direct upload...');
       const fileName = newFileName || generateUUID();
       const result = await cfImages.uploadImage(file, fileName);
 

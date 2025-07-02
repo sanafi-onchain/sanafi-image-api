@@ -13,19 +13,28 @@ export class CloudflareImages {
    * @returns {Promise<{uploadURL: string, id: string}>}
    */
   async createDirectUpload() {
+    console.info('Calling CF Images direct_upload API...');
+
+    const requestBody = {
+      requireSignedURLs: false,
+      metadata: {
+        source: 'sanafi-image-api'
+      }
+    };
+
+    console.info('Request body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch(`${this.baseURL}/v2/direct_upload`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        requireSignedURLs: false,
-        metadata: {
-          source: 'sanafi-image-api'
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
+
+    console.info('Response status:', response.status);
+    console.info('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -34,6 +43,7 @@ export class CloudflareImages {
     }
 
     const data = await response.json();
+    console.info('Response data:', data);
 
     if (!data.success) {
       console.error('CF Images API error:', data);
