@@ -92,34 +92,24 @@ wrangler secret put CF_IMAGES_API_TOKEN --env production
 
 ### POST /upload
 
-Upload images or generate presigned upload URLs.
+Upload images and get a public URL immediately.
 
 **Request Format**: `multipart/form-data`
 
 **Required Fields**:
-- `is_only_presign` (boolean): `true` for presigned URL, `false` for direct upload
 - `file` (blob): Image file (JPG, PNG, or SVG, max 5MB)
 
 **Optional Fields**:
 - `new_file_name` (string): Custom filename (defaults to UUID)
 
-### Response Formats
+### Response Format
 
-#### Presigned URL Response (`is_only_presign: true`)
 ```json
 {
   "success": true,
-  "presignURL": "https://upload.imagedelivery.net/...",
-  "id": "image_id_here"
-}
-```
-
-#### Direct Upload Response (`is_only_presign: false`)
-```json
-{
-  "success": true,
-  "publicURL": "https://imagedelivery.net/account_hash/image_id/public",
-  "id": "image_id_here"
+  "url": "https://imagedelivery.net/account_hash/image_id/public",
+  "id": "image_id_here",
+  "filename": "custom_or_generated_filename"
 }
 ```
 
@@ -133,22 +123,12 @@ Upload images or generate presigned upload URLs.
 
 ## Example Usage
 
-### Direct Upload with cURL
+### Upload with cURL
 
 ```bash
 curl -X POST http://localhost:8787/upload \
   -H "Origin: https://localhost:3000" \
-  -F "is_only_presign=false" \
   -F "new_file_name=my-image" \
-  -F "file=@/path/to/image.jpg"
-```
-
-### Presigned URL Generation
-
-```bash
-curl -X POST http://localhost:8787/upload \
-  -H "Origin: https://localhost:3000" \
-  -F "is_only_presign=true" \
   -F "file=@/path/to/image.jpg"
 ```
 
@@ -156,7 +136,6 @@ curl -X POST http://localhost:8787/upload \
 
 ```javascript
 const formData = new FormData();
-formData.append('is_only_presign', 'false');
 formData.append('new_file_name', 'my-awesome-image');
 formData.append('file', fileInput.files[0]);
 
@@ -167,7 +146,8 @@ const response = await fetch('https://your-worker.your-subdomain.workers.dev/upl
 
 const result = await response.json();
 if (result.success) {
-  console.info('Image URL:', result.publicURL);
+  console.log('Image URL:', result.url);
+  console.log('Image ID:', result.id);
 }
 ```
 

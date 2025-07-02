@@ -22,12 +22,8 @@ app.post('/upload', async (c) => {
     // Validate environment variables
     if (!env.CF_IMAGES_ACCOUNT_ID || !env.CF_IMAGES_API_TOKEN) {
       console.error('Missing required environment variables');
-      console.error('CF_IMAGES_ACCOUNT_ID:', env.CF_IMAGES_ACCOUNT_ID ? 'SET' : 'MISSING');
-      console.error('CF_IMAGES_API_TOKEN:', env.CF_IMAGES_API_TOKEN ? 'SET' : 'MISSING');
       return c.json({ success: false, error: 'Server configuration error' }, 500);
     }
-
-    console.info('Environment check passed - both variables are set');
 
     // Check Content-Type
     const contentType = c.req.header('content-type');
@@ -44,22 +40,14 @@ app.post('/upload', async (c) => {
       return c.json({ success: false, error: 'Invalid form data' }, 400);
     }
 
-    // Extract and validate fields
-    const isOnlyPresignStr = formData.get('is_only_presign');
+    // Extract fields
     const newFileName = formData.get('new_file_name');
     const file = formData.get('file');
 
-    // Validate required fields
-    if (isOnlyPresignStr === null) {
-      return c.json({ success: false, error: 'Missing required field: is_only_presign' }, 400);
-    }
-
+    // Validate file
     if (!file || !(file instanceof File)) {
       return c.json({ success: false, error: 'Missing or invalid file' }, 400);
     }
-
-    // Parse boolean
-    const isOnlyPresign = isOnlyPresignStr === 'true';
 
     // Validate file size (5MB = 5 * 1024 * 1024 bytes)
     const maxFileSize = 5 * 1024 * 1024;
@@ -76,41 +64,29 @@ app.post('/upload', async (c) => {
       }, 415);
     }
 
-    console.info('File details:', {
+    const fileName = newFileName || generateUUID();
+    const fileInfo = {
+      fileName,
       name: file.name,
       type: file.type,
-      size: file.size,
-      isOnlyPresign,
-      isOnlyPresignStr
-    });
+      size: file.size
+    };
+    console.info(`${fileName} - Uploading file:`, fileInfo);
 
+    // Upload directly to Cloudflare Images
     const cfImages = new CloudflareImages(env.CF_IMAGES_ACCOUNT_ID, env.CF_IMAGES_API_TOKEN);
+    const result = await cfImages.uploadImage(file, fileName);
 
-    if (isOnlyPresign) {
-      // Generate presigned URL - no file data needed for this step
-      console.info('Creating presigned URL...');
-      const result = await cfImages.createDirectUpload();
+    // Build permanent public URL
+    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_ID}/${result.id}/public`;
+    console.info(`${fileName} - Success upload file:`, fileInfo);
 
-      return c.json({
-        success: true,
-        presignURL: result.uploadURL,
-        id: result.id
-      });
-    } else {
-      // Direct upload
-      console.info('Performing direct upload...');
-      const fileName = newFileName || generateUUID();
-      const result = await cfImages.uploadImage(file, fileName);
-
-      // Build permanent URL
-      const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_ID}/${result.id}/public`;
-
-      return c.json({
-        success: true,
-        publicURL,
-        id: result.id
-      });
-    }
+    return c.json({
+      success: true,
+      url: publicURL,
+      id: result.id,
+      filename: fileName
+    });
   } catch (error) {
     console.error('Upload error:', error);
     return c.json({
@@ -130,6 +106,14 @@ app.all('/upload', (c) => {
 // Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Default route
+app.get('/', (c) => {
+  return c.json({
+    message: 'Sanafi Image API',
+    version: '1.0.0'
+  });
 });
 
 // 404 handler

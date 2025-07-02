@@ -12,42 +12,50 @@ export class CloudflareImages {
    * Create a direct upload URL for presigned uploads
    * @returns {Promise<{uploadURL: string, id: string}>}
    */
+  /**
+   * Create a direct upload URL for presigned uploads
+   * @returns {Promise<{uploadURL: string, id: string}>}
+   */
   async createDirectUpload() {
-    console.info('Calling CF Images direct_upload API...');
+    console.log('Creating direct upload URL...');
 
-    const requestBody = {
-      requireSignedURLs: false,
-      metadata: {
-        source: 'sanafi-image-api'
-      }
-    };
-
-    console.info('Request body:', JSON.stringify(requestBody, null, 2));
-
+    // Try the direct upload endpoint without any body first
     const response = await fetch(`${this.baseURL}/v2/direct_upload`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
+        'Authorization': `Bearer ${this.apiToken}`
+        // Removing Content-Type to see if that's the issue
+      }
     });
 
-    console.info('Response status:', response.status);
-    console.info('Response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Response body:', responseText);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Direct upload error:', errorText);
-      throw new Error(`Failed to create direct upload: ${response.status} ${response.statusText}`);
+      console.error('Direct upload API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText
+      });
+      throw new Error(`Failed to create direct upload: ${response.status} ${response.statusText} - ${responseText}`);
     }
 
-    const data = await response.json();
-    console.info('Response data:', data);
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', responseText);
+      throw new Error('Invalid JSON response from Cloudflare Images API');
+    }
+
+    console.log('Parsed response:', data);
 
     if (!data.success) {
-      console.error('CF Images API error:', data);
-      throw new Error('Cloudflare Images API returned error');
+      console.error('CF Images API returned success=false:', data);
+      throw new Error(`Cloudflare Images API error: ${JSON.stringify(data.errors)}`);
     }
 
     return {

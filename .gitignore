@@ -13,6 +13,7 @@ yarn-error.log*
 .env.local
 .env.production
 .env.development
+.dev.vars
 
 # Wrangler
 .wrangler/

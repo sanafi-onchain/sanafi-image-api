@@ -3,6 +3,10 @@ main = "src/index.js"
 compatibility_date = "2024-12-19"
 compatibility_flags = ["nodejs_compat"]
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # Public variables (safe to commit)
 [vars]
 ALLOWED_ORIGINS = "https://revi-cache.com,https://localhost:5173"
