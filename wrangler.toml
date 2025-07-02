@@ -17,6 +17,10 @@ name = "sanafi-image-api-dev"
 ALLOWED_ORIGINS = "https://sanafi.xyz,https://localhost:6666"
 
 [env.production]
-name = "sanafi-image-api"
+name = "sanafi-image-api-prod"
 [env.production.vars]
 ALLOWED_ORIGINS = "https://sanafi.xyz"
+
+# wrangler.toml (wrangler v3.88.0^)
+[observability.logs]
+enabled = true
