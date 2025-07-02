@@ -44,15 +44,21 @@ app.post('/upload', async (c) => {
     const newFileName = formData.get('new_file_name');
     const file = formData.get('file');
 
+    // Validate new_file_name request
+    if (newFileName && !/^[a-zA-Z0-9_-]+$/.test(newFileName)) {
+      return c.json({ success: false, error: 'Invalid new_file_name. Only alphanumeric characters, underscores, and hyphens are allowed.' }, 400);
+    }
+
     // Validate file
     if (!file || !(file instanceof File)) {
       return c.json({ success: false, error: 'Missing or invalid file' }, 400);
     }
 
     // Validate file size (5MB = 5 * 1024 * 1024 bytes)
-    const maxFileSize = 5 * 1024 * 1024;
+    const maxSizeInMB = 5;
+    const maxFileSize = maxSizeInMB * 1024 * 1024;
     if (file.size > maxFileSize) {
-      return c.json({ success: false, error: 'File size exceeds 5MB limit' }, 413);
+      return c.json({ success: false, error: `File size exceeds ${maxSizeInMB}MB limit` }, 413);
     }
 
     // Validate MIME type
@@ -65,21 +71,20 @@ app.post('/upload', async (c) => {
     }
 
     const fileName = newFileName || generateUUID();
-    const fileInfo = {
+    console.info(`${fileName} - Uploading file:`, {
       fileName,
       name: file.name,
       type: file.type,
       size: file.size
-    };
-    console.info(`${fileName} - Uploading file:`, fileInfo);
+    });
 
     // Upload directly to Cloudflare Images
     const cfImages = new CloudflareImages(env.CF_IMAGES_ACCOUNT_ID, env.CF_IMAGES_API_TOKEN);
     const result = await cfImages.uploadImage(file, fileName);
 
     // Build permanent public URL
-    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_ID}/${result.id}/public`;
-    console.info(`${fileName} - Success upload file:`, fileInfo);
+    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${result.id}/public`;
+    console.info(`${fileName} - Success upload file`);
 
     return c.json({
       success: true,

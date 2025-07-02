@@ -72,6 +72,7 @@ export class CloudflareImages {
    */
   async uploadImage(file, filename) {
     const formData = new FormData();
+    formData.append('id', filename);
     formData.append('file', file);
     formData.append('requireSignedURLs', 'false');
     formData.append(
