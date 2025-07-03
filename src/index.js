@@ -8,7 +8,10 @@ import { TYPES } from './utils/enum.js';
 const app = new Hono();
 
 // Global CORS middleware
-app.use('*', cors(getCorsConfig()));
+app.use('*', (c, next) => {
+  // Pass the context's env to getCorsConfig
+  return cors(getCorsConfig(c.env))(c, next);
+});
 
 // Handle preflight OPTIONS requests
 app.options('*', () => {
