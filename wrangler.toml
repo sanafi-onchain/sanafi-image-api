@@ -24,4 +24,4 @@ ALLOWED_ORIGINS = "https://localhost:5173,https://localhost:3000"
 [env.production]
 name = "sanafi-image-api"
 [env.production.vars]
-ALLOWED_ORIGINS = "https://revi-cache.com"
+ALLOWED_ORIGINS = "https://sanafi.xyz,https://app.sanafi.xyz"

@@ -51,10 +51,14 @@ app.post('/upload', async (c) => {
 
     // Validate variant
     const allowedVariants = Object.keys(TYPES.VARIANTS);
-    if (!variant || !allowedVariants.includes(variant)) {
-      return c.json({ success: false, error: 'Invalid variant' }, 400);
+    let defaultVariant = null;
+    if (variant) {
+      if (!allowedVariants.includes(variant)) {
+        return c.json({ success: false, error: 'Invalid variant' }, 400);
+      }
+
+      defaultVariant = TYPES.VARIANTS[variant];
     }
-    const pickedVariant = TYPES.VARIANTS[variant];
 
     // Validate new_file_name request
     if (newFileName && !/^[a-zA-Z0-9_-]+$/.test(newFileName)) {
@@ -85,7 +89,7 @@ app.post('/upload', async (c) => {
     const fileName = newFileName || Date.now();
     console.info(`${fileName} - Uploading file:`, {
       fileName,
-      pickedVariant,
+      defaultVariant,
       name: file.name,
       type: file.type,
       size: file.size
@@ -96,13 +100,21 @@ app.post('/upload', async (c) => {
     const result = await cfImages.uploadImage(file, fileName);
 
     // Build permanent public URL
-    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${result.id}/${pickedVariant}`;
-    console.info(`${fileName} - Success upload file`);
+    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${result.id}/${defaultVariant || 'public'}`;
 
+    // Generate available URLs for all variants
+    const availableUrls = {};
+    for (const key in TYPES.VARIANTS) {
+      const value = TYPES.VARIANTS[key];
+      availableUrls[key] = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${result.id}/${value}`;
+    }
+
+    console.info(`${fileName} - Success upload file`);
     return c.json({
       success: true,
-      url: publicURL,
-      id: result.id
+      id: result.id,
+      defaultUrl: publicURL,
+      availableUrls
     });
   } catch (error) {
     console.error('Upload error:', error);
