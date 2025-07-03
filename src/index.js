@@ -132,6 +132,66 @@ app.all('/upload', (c) => {
   }
 });
 
+// Get image endpoint
+app.get('/image', async (c) => {
+  try {
+    const env = c.env;
+
+    // Validate environment variables
+    if (!env.CF_IMAGES_ACCOUNT_HASH) {
+      console.error('Missing CF_IMAGES_ACCOUNT_HASH environment variable');
+      return c.json({ success: false, error: 'Server configuration error' }, 500);
+    }
+
+    // Get query parameters
+    const imageId = c.req.query('image_id');
+    const variant = c.req.query('variant');
+
+    // Validate image_id
+    if (!imageId) {
+      return c.json({ success: false, error: 'Missing image_id query parameter' }, 400);
+    }
+
+    // Validate variant if provided
+    const allowedVariants = Object.keys(TYPES.VARIANTS);
+    let selectedVariant = 'public'; // default variant
+
+    if (variant) {
+      if (!allowedVariants.includes(variant)) {
+        return c.json({
+          success: false,
+          error: `Invalid variant. Allowed variants: ${allowedVariants.join(', ')}`
+        }, 400);
+      }
+      selectedVariant = TYPES.VARIANTS[variant];
+    }
+
+    // Build default URL with selected variant
+    const defaultUrl = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${imageId}/${selectedVariant}`;
+
+    // Generate available URLs for all variants
+    const availableUrls = {};
+    for (const key in TYPES.VARIANTS) {
+      const value = TYPES.VARIANTS[key];
+      availableUrls[key] = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${imageId}/${value}`;
+    }
+
+    console.info(`Retrieved image info for ID: ${imageId}`);
+    return c.json({
+      success: true,
+      id: imageId,
+      defaultUrl,
+      availableUrls
+    });
+  } catch (error) {
+    console.error('Get image error:', error);
+    return c.json({
+      success: false,
+      error: error.message || 'Internal server error'
+    }, 500);
+  }
+});
+
 // Default route
 app.get('/', (c) => {
   return c.json({
