@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { getCorsConfig } from './utils/cors.js';
 // import { generateUUID } from './utils/uuid.js';
 import { CloudflareImages } from './lib/cf-images.js';
+import { TYPES } from './utils/enum.js';
 
 const app = new Hono();
 
@@ -43,6 +44,14 @@ app.post('/upload', async (c) => {
     // Extract fields
     const newFileName = formData.get('new_file_name');
     const file = formData.get('file');
+    const variant = formData.get('variant');
+
+    // Validate variant
+    const allowedVariants = Object.keys(TYPES.VARIANTS);
+    if (!variant || !allowedVariants.includes(variant)) {
+      return c.json({ success: false, error: 'Invalid variant' }, 400);
+    }
+    const pickedVariant = TYPES.VARIANTS[variant];
 
     // Validate new_file_name request
     if (newFileName && !/^[a-zA-Z0-9_-]+$/.test(newFileName)) {
@@ -73,6 +82,7 @@ app.post('/upload', async (c) => {
     const fileName = newFileName || Date.now();
     console.info(`${fileName} - Uploading file:`, {
       fileName,
+      pickedVariant,
       name: file.name,
       type: file.type,
       size: file.size
@@ -83,7 +93,7 @@ app.post('/upload', async (c) => {
     const result = await cfImages.uploadImage(file, fileName);
 
     // Build permanent public URL
-    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${result.id}/public`;
+    const publicURL = `https://imagedelivery.net/${env.CF_IMAGES_ACCOUNT_HASH}/${result.id}/${pickedVariant}`;
     console.info(`${fileName} - Success upload file`);
 
     return c.json({

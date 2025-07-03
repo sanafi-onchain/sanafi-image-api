@@ -12,10 +12,6 @@ export class CloudflareImages {
    * Create a direct upload URL for presigned uploads
    * @returns {Promise<{uploadURL: string, id: string}>}
    */
-  /**
-   * Create a direct upload URL for presigned uploads
-   * @returns {Promise<{uploadURL: string, id: string}>}
-   */
   async createDirectUpload() {
     console.log('Creating direct upload URL...');
 
