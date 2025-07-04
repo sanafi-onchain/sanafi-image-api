@@ -3,12 +3,6 @@ main = "src/index.js"
 compatibility_date = "2024-12-19"
 compatibility_flags = ["nodejs_compat"]
 
-# D1 Database binding
-[[d1_databases]]
-binding = "DB"
-database_name = "sanafi-general"
-database_id = "4029a1ba-7164-426d-aa96-90e26cd0559e"
-
 [observability]
 enabled = true
 head_sampling_rate = 1
@@ -24,10 +18,24 @@ ALLOWED_ORIGINS = "https://revi-cache.com,https://localhost:5173"
 
 [env.development]
 name = "sanafi-image-api-dev"
+
+# D1 Database binding for development
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "sanafi-general"
+database_id = "4029a1ba-7164-426d-aa96-90e26cd0559e"
+
 [env.development.vars]
 ALLOWED_ORIGINS = "https://localhost:5173,https://localhost:3000"
 
 [env.production]
 name = "sanafi-image-api"
+
+# D1 Database binding for production
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "sanafi-general"
+database_id = "4029a1ba-7164-426d-aa96-90e26cd0559e"
+
 [env.production.vars]
 ALLOWED_ORIGINS = "https://sanafi.xyz,https://app.sanafi.xyz"
