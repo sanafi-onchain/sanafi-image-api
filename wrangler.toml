@@ -38,4 +38,4 @@ database_name = "sanafi-general"
 database_id = "4029a1ba-7164-426d-aa96-90e26cd0559e"
 
 [env.production.vars]
-ALLOWED_ORIGINS = "https://sanafi.xyz,https://app.sanafi.xyz"
+ALLOWED_ORIGINS = "https://sanafi.xyz,https://app.sanafi.xyz,https://backoffice.sanafi.xyz"
