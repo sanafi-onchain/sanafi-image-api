@@ -18,10 +18,14 @@ export function getCorsConfig(env = null) {
         .filter(Boolean);
 
       // Allow requests with no origin (e.g., Postman, cURL)
-      if (!origin) return true;
+      if (!origin) return '*';
 
       // Check if origin is in allowed list
-      return origins.includes(origin);
+      if (origins.includes(origin)) {
+        return origin; // Return the actual origin, not true
+      }
+
+      return false; // Reject if not in allowed list
     },
     allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

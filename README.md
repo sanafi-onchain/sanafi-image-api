@@ -2,6 +2,21 @@
 
 A Cloudflare Worker API for image uploading with support for both direct uploads and presigned URLs using Cloudflare Images.
 
+## 🚀 Quick Start
+
+```bash
+# 1. Setup database
+./setup-db.sh
+
+# 2. Start development server
+wrangler dev --env development
+
+# 3. Test API
+curl "http://localhost:8787/images"
+```
+
+**Your API will be ready at `http://localhost:8787`** 🎉
+
 ## Features
 
 - 🚀 **Fast & Reliable**: Built on Cloudflare Workers for global edge deployment
@@ -43,13 +58,13 @@ This API uses Cloudflare D1 (SQLite) database to store image metadata and varian
 #### Local Database Migration
 ```bash
 # Apply migration to local database (for development)
-wrangler d1 execute sanafi-general --file=./database/migration-add-description.sql
+wrangler d1 execute sanafi-general --local --env development --file=./database/migration-add-description.sql
 ```
 
 #### Remote Database Migration
 ```bash
 # Apply migration to remote database (for production)
-wrangler d1 execute sanafi-general --remote --file=./database/migration-add-description.sql
+wrangler d1 execute sanafi-general --env production --file=./database/migration-add-description.sql
 ```
 
 ### When to Use Setup vs Migration
@@ -57,9 +72,9 @@ wrangler d1 execute sanafi-general --remote --file=./database/migration-add-desc
 | Scenario | Command | Purpose |
 |----------|---------|---------|
 | **New Project** | `./setup-db.sh` | Creates all tables from scratch |
-| **Schema Updates** | `wrangler d1 execute sanafi-general --file=./database/migration-*.sql` | Applies incremental changes |
-| **Local Development** | Add `--local` flag | Test changes locally first |
-| **Production Deployment** | Remove `--local` flag | Apply to live database |
+| **Schema Updates (Local)** | `wrangler d1 execute sanafi-general --local --env development --file=./database/migration-*.sql` | Applies incremental changes locally |
+| **Schema Updates (Production)** | `wrangler d1 execute sanafi-general --env production --file=./database/migration-*.sql` | Applies incremental changes to production |
+| **Development Server** | `wrangler dev --env development` | Includes D1 database binding |
 
 ### Database Schema
 
@@ -135,10 +150,14 @@ If you decide to add GitHub Actions later, you'll need these secrets:
 # Install dependencies
 yarn install
 
-# Start local development server
-yarn dev
+# Setup database schema (first time only)
+./setup-db.sh
+
+# Start local development server with database
+wrangler dev --env development
 
 # The API will be available at http://localhost:8787
+# Note: Use --env development to include D1 database binding
 ```
 
 ## Manual Deployment
@@ -287,13 +306,13 @@ List all images with pagination support.
 ```bash
 # Basic upload
 curl -X POST http://localhost:8787/upload \
-  -H "Origin: https://localhost:3000" \
+  -H "Origin: http://localhost:5173" \
   -F "new_file_name=my-image" \
   -F "file=@/path/to/image.jpg"
 
 # Upload with description and variant
 curl -X POST http://localhost:8787/upload \
-  -H "Origin: https://localhost:3000" \
+  -H "Origin: http://localhost:5173" \
   -F "new_file_name=sunset-photo" \
   -F "description=Beautiful sunset at the beach" \
   -F "variant=medium" \
@@ -422,19 +441,38 @@ Requests from non-whitelisted origins will receive a `403 Forbidden` response.
   - `image/png`
   - `image/svg+xml`
 
+## Rate Limits & Quotas
+
+- **Cloudflare Workers**: 100,000 requests per day (free tier)
+- **Cloudflare Images**: Varies by plan (check your Cloudflare dashboard)
+- **D1 Database**: 5 million reads, 100,000 writes per day (free tier)
+- **File uploads**: No built-in rate limiting (implement as needed)
+
 ## Development Scripts
 
 ```bash
-# Lint code
+# Start development server
+wrangler dev --env development
+
+# Deploy to development
+wrangler deploy --env development
+
+# Deploy to production
+wrangler deploy --env production
+
+# Execute database migrations
+./setup-db.sh
+
+# Lint code (if configured)
 yarn lint
 
-# Fix linting issues
+# Fix linting issues (if configured)  
 yarn lint:fix
 
-# Format code with Prettier
+# Format code with Prettier (if configured)
 yarn format
 
-# Check code formatting
+# Check code formatting (if configured)
 yarn format:check
 ```
 
@@ -467,25 +505,88 @@ sanafi-image-api/
 The API includes a health check endpoint:
 
 ```bash
-curl https://your-worker.your-subdomain.workers.dev/health
+curl http://localhost:8787/
 ```
 
 Response:
 ```json
 {
+  "message": "Sanafi Image API",
+  "version": "1.0.0",
   "status": "healthy",
-  "timestamp": "2025-07-02T10:30:00.000Z"
+  "timestamp": "2025-07-05T00:00:00.000Z"
 }
 ```
 
-## Contributing
+## Troubleshooting
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `npm run lint` and `npm run format`
-5. Submit a pull request
+### CORS Issues
 
-## License
+If you encounter CORS errors:
 
-MIT License - see LICENSE file for details.
+1. **Check your origin matches exactly**:
+   ```bash
+   # Your frontend origin must match ALLOWED_ORIGINS exactly
+   # Including protocol (http:// vs https://)
+   ```
+
+2. **Verify CORS configuration**:
+   ```bash
+   # Check wrangler.toml for correct ALLOWED_ORIGINS
+   # For development: http://localhost:5173,http://localhost:3000
+   ```
+
+3. **Restart development server** after changing CORS settings:
+   ```bash
+   wrangler dev --env development
+   ```
+
+### Database Issues
+
+If you get "Database not available" errors:
+
+1. **Run database setup**:
+   ```bash
+   ./setup-db.sh
+   ```
+
+2. **Use development environment**:
+   ```bash
+   # This includes D1 database binding
+   wrangler dev --env development
+   ```
+
+3. **Check database binding** in Cloudflare Dashboard:
+   - Go to **Workers & Pages** → **Your Worker** → **Settings** → **Variables**
+   - Verify `DB` appears under **D1 Database Bindings**
+
+### Environment Issues
+
+If environment variables aren't working:
+
+1. **Check .dev.vars file** for local development
+2. **Verify secrets are set**:
+   ```bash
+   wrangler secret put CF_IMAGES_ACCOUNT_ID --env development
+   wrangler secret put CF_IMAGES_API_TOKEN --env development
+   ```
+
+## Performance & Best Practices
+
+### Image Optimization
+
+- **Use appropriate variants**: Choose `SMALL` for thumbnails, `MEDIUM` for previews, `PUBLIC` for full size
+- **Implement caching**: Cache image URLs in your frontend to avoid repeated API calls
+- **Pagination**: Use reasonable page sizes (10-50) for optimal performance
+
+### Database Performance
+
+- **Index usage**: The API uses indexes on `image_id` and `created_at` for fast queries
+- **Pagination**: Prefer page-based pagination over large offset values
+- **Batch operations**: Upload multiple images in sequence rather than parallel for better database performance
+
+### CORS Configuration
+
+- **Minimize origins**: Only include necessary origins in `ALLOWED_ORIGINS`
+- **Use HTTPS in production**: Always use HTTPS origins for production environments
+- **Environment separation**: Keep development and production origins separate

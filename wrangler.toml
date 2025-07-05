@@ -9,7 +9,7 @@ head_sampling_rate = 1
 
 # Public variables (safe to commit)
 [vars]
-ALLOWED_ORIGINS = "https://revi-cache.com,https://localhost:5173"
+ALLOWED_ORIGINS = "https://revi-cache.com,http://localhost:5173,http://localhost:3000"
 
 # Sensitive variables are set via:
 # 1. wrangler secret put CF_IMAGES_API_TOKEN
@@ -26,7 +26,7 @@ database_name = "sanafi-general"
 database_id = "4029a1ba-7164-426d-aa96-90e26cd0559e"
 
 [env.development.vars]
-ALLOWED_ORIGINS = "https://localhost:5173,https://localhost:3000"
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:3000"
 
 [env.production]
 name = "sanafi-image-api"

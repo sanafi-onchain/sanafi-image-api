@@ -5,12 +5,12 @@
 echo "🚀 Setting up database schema for sanafi-general..."
 
 # Apply schema to local D1 database (for development)
-echo "📝 Applying schema to local database..."
-wrangler d1 execute sanafi-general --local --file=./database/schema.sql
+echo "📝 Applying schema to local database (development env)..."
+wrangler d1 execute sanafi-general --local --env development --file=./database/schema.sql
 
 # Apply schema to remote D1 database (for production)
-echo "📝 Applying schema to remote database..."
-wrangler d1 execute sanafi-general --file=./database/schema.sql
+echo "📝 Applying schema to remote database (production env)..."
+wrangler d1 execute sanafi-general --env production --file=./database/schema.sql
 
 echo "✅ Database schema setup complete!"
 echo ""
